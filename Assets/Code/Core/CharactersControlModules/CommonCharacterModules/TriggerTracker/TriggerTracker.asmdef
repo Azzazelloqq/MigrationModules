@@ -1,0 +1,18 @@
+{
+    "name": "TriggerTracker",
+    "rootNamespace": "",
+    "references": [
+        "GUID:0f4a9e871b6a61d4e9067fdc19dbde33",
+        "GUID:165d35b2d715bca4ab5d063739358946",
+        "GUID:4d5db090d868d5e40acc9d57b5a46481"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

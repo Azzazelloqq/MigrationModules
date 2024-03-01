@@ -1,0 +1,16 @@
+{
+    "name": "CommonPool",
+    "rootNamespace": "",
+    "references": [
+        "GUID:d2c2a46a0d90235499c918e745939b1c"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

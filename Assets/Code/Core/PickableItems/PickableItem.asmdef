@@ -1,0 +1,22 @@
+{
+    "name": "PickableItem",
+    "rootNamespace": "",
+    "references": [
+        "GUID:d2c2a46a0d90235499c918e745939b1c",
+        "GUID:4d5db090d868d5e40acc9d57b5a46481",
+        "GUID:58fcb381bbfff5447897b1c9360e82cc",
+        "GUID:a649dfdd7ec849148a9a050cb8705d74",
+        "GUID:59d2283191b76d34fa12ebc133f44674",
+        "GUID:080b69dd941748246ba5a93847337b89",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

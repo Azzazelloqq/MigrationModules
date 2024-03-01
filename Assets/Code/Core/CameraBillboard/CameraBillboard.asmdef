@@ -1,0 +1,16 @@
+{
+    "name": "CameraBillboard",
+    "rootNamespace": "",
+    "references": [
+        "GUID:59d2283191b76d34fa12ebc133f44674"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
