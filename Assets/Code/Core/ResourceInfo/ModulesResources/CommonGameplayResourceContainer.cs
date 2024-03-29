@@ -8,6 +8,8 @@ public struct CommonGameplayResourceContainer
     public readonly string TargetArrowView;
     public readonly TriggerZoneContainer TriggerZoneContainer;
     public readonly string PickableItemView;
+    public readonly string PlayerWalkOverride;
+    public readonly string PlayerRunOverride;
 
     public CommonGameplayResourceContainer(string groupId)
     {
@@ -17,6 +19,8 @@ public struct CommonGameplayResourceContainer
         MoneyPackView = "MoneyPackView";
         TargetArrowView = "TargetArrowView";
         PickableItemView = "PickableItemView";
+        PlayerWalkOverride = "WalkOverride";
+        PlayerRunOverride = "RunOverride";
     }
 }
 }

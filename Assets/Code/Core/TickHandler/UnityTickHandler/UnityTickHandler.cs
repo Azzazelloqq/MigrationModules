@@ -7,6 +7,7 @@ public class UnityTickHandler : ITickHandler
 {
     public event Action<float> FrameUpdate;
     public event Action<float> FrameLateUpdate;
+    public event Action<float> EndFrameUpdate; 
     public event Action<float> PhysicUpdate;
 
     IDispatcher ITickHandler.Dispatcher => _dispatcher;
@@ -14,6 +15,7 @@ public class UnityTickHandler : ITickHandler
     private readonly IDispatcher _dispatcher;
     private readonly List<Action<float>> _updateListeners;
     private readonly List<Action<float>> _lateUpdateListeners;
+    private readonly List<Action<float>> _endFrameUpdateListeners;
     private readonly List<Action<float>> _physicsListeners;
     private readonly List<Action<float>> _lateUpdateOnceListeners;
     
@@ -24,6 +26,7 @@ public class UnityTickHandler : ITickHandler
         _lateUpdateListeners = new List<Action<float>>(listenersCapacity);
         _physicsListeners = new List<Action<float>>(listenersCapacity);
         _lateUpdateOnceListeners = new List<Action<float>>(listenersCapacity);
+        _endFrameUpdateListeners = new List<Action<float>>(listenersCapacity);
         
         SubscribeOnDispatcherEvents();
     }
@@ -72,11 +75,22 @@ public class UnityTickHandler : ITickHandler
         _lateUpdateOnceListeners.Add(listener);
     }
 
+    public void SubscribeOnEndFrameUpdate(Action<float> listener)
+    {
+        _endFrameUpdateListeners.Add(listener);
+    }
+
+    public void UnsubscribeOnEndFrameUpdate(Action<float> listener)
+    {
+        _endFrameUpdateListeners.Remove(listener);
+    }
+
     private void SubscribeOnDispatcherEvents()
     {
         _dispatcher.OnUpdate += OnDispatcherUpdateFrame;
         _dispatcher.OnLateUpdate += OnDispatcherLateUpdateFrame;
         _dispatcher.OnFixedUpdate += OnDispatcherPhysicsFrame;
+        _dispatcher.OnEndFrameUpdate += OnDispatcherEndFrameUpdate;
     }
 
     private void UnsubscribeOnDispatcherEvents()
@@ -84,6 +98,7 @@ public class UnityTickHandler : ITickHandler
         _dispatcher.OnUpdate -= OnDispatcherUpdateFrame;
         _dispatcher.OnLateUpdate -= OnDispatcherLateUpdateFrame;
         _dispatcher.OnFixedUpdate -= OnDispatcherPhysicsFrame;
+        _dispatcher.OnEndFrameUpdate -= OnDispatcherEndFrameUpdate;
     }
     
     private void OnDispatcherPhysicsFrame(float deltaTime)
@@ -118,6 +133,16 @@ public class UnityTickHandler : ITickHandler
         }
         
         _lateUpdateListeners.Clear();
+    }
+    
+    private void OnDispatcherEndFrameUpdate(float deltaTime)
+    {
+        EndFrameUpdate?.Invoke(deltaTime);
+
+        foreach (var endFrameUpdateListener in _endFrameUpdateListeners)
+        {
+            endFrameUpdateListener?.Invoke(deltaTime);
+        }
     }
 }
 }

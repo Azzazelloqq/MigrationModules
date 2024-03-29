@@ -1,0 +1,18 @@
+{
+    "name": "UpgradeHandler",
+    "rootNamespace": "",
+    "references": [
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:4d5db090d868d5e40acc9d57b5a46481",
+        "GUID:165d35b2d715bca4ab5d063739358946"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

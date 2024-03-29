@@ -9,7 +9,6 @@ public interface ICompositeDisposable : IDisposable
     public void AddDisposable(IDisposable disposable);
     public void AddDisposable(IDisposable firstDisposable, IDisposable secondDisposable);
     public void AddDisposable(IDisposable firstDisposable, IDisposable secondDisposable, IDisposable thirdDisposable);
-    public void AddDisposable(IDisposable[] disposables);
-    public void DisposeCollection(IReadOnlyCollection<IDisposable> disposables);
+    public void AddDisposable(IEnumerable<IDisposable> disposables);
 }
 }

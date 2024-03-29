@@ -9,12 +9,11 @@ public class CameraProvider : ICameraProvider
     public event Action CinematicStarted;
     public event Action CinematicStepCompleted;
     public event Action CinematicReturnCompleted;
-    public Camera Camera => _cameraMovement.Camera;
 
     public bool CinematicInProcess => _cameraMovement.CinematicInProcess;
 
     private readonly ICameraMovementPresenter _cameraMovement;
-
+    
     public CameraProvider(ICameraMovementPresenter cameraMovementPresenter)
     {
         _cameraMovement = cameraMovementPresenter;
@@ -22,6 +21,7 @@ public class CameraProvider : ICameraProvider
 
     public void Initialize()
     {
+        
         _cameraMovement.CinematicStarted += OnCinematicMovementStarted;
         _cameraMovement.CinematicStepCompleted += OnCinematicMovementStepCompleted;
         _cameraMovement.CinematicReturnCompleted += OnCinematicMovementReturnCompleted;
@@ -34,6 +34,11 @@ public class CameraProvider : ICameraProvider
         _cameraMovement.CinematicReturnCompleted -= OnCinematicMovementReturnCompleted;
     }
 
+    public void CinematicZoom(float zoomValue, Action onZoomCompleted = null)
+    {
+        _cameraMovement.CinematicZoom(zoomValue, onZoomCompleted);
+    }
+    
     public void PlayCinematicMoveTo(Vector3 endPosition, Action onMoveCompleted = null, Action onDelayCompleted = null)
     {
         _cameraMovement.CinematicMoveToPosition(endPosition, onMoveCompleted, onDelayCompleted);
@@ -54,16 +59,28 @@ public class CameraProvider : ICameraProvider
         _cameraMovement.ReturnCinematicCamera(onReturnCameraCompleted);
     }
 
-    public void EnableCamera()
+    public void EnableCamera(Camera targetCamera)
     {
-        _cameraMovement.Camera.gameObject.SetActive(true);
+        _cameraMovement.EnableCamera(targetCamera);
     }
 
-    public void DisableCamera()
+    public void DisableCamera(Camera targetCamera)
     {
-        _cameraMovement.Camera.gameObject.SetActive(false);
+        _cameraMovement.DisableCamera(targetCamera);
     }
 
+    public Camera GetMainCamera()
+    {
+        return _cameraMovement.MainCamera;
+    }
+    
+    public Vector3 GetCameraTargetOffset()
+    {
+        var cameraTargetOffset = _cameraMovement.GetCameraTargetOffset();
+        var cameraEndPosition = _cameraMovement.ActiveCamera.transform.TransformDirection(cameraTargetOffset);
+        return cameraEndPosition;
+    }
+    
     private void OnCinematicMovementStarted()
     {
         CinematicStarted?.Invoke();

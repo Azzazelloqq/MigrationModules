@@ -79,7 +79,7 @@ public class TargetArrowPresenter : ITargetArrowPresenter
         IDynamicOutOfScreenTargetUIArrowModel model = new DynamicOutOfScreenTargetUIArrowModel();
         var prefab = await _resourceLoader.LoadResourceAsync<GameObject>(_arrowResourceId, token);
         var view = Object.Instantiate(prefab, _arrowParent).GetComponent<DynamicOutOfScreenTargetUIArrowViewBase>();
-        var gameplayCamera = _cameraProvider.Camera;
+        var gameplayCamera = _cameraProvider.GetMainCamera();
         _uiArrow = new DynamicOutOfScreenTargetUIArrowPresenter(
             view,
             model,

@@ -1,0 +1,16 @@
+{
+    "name": "ItemTransfer",
+    "rootNamespace": "",
+    "references": [
+        "GUID:ecacbc3263fc2b44d95e9cf88414d392"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

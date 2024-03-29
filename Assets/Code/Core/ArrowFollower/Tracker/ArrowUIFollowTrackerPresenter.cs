@@ -53,7 +53,6 @@ public class ArrowUIFollowTrackerPresenter : IArrowUIFollowTrackerPresenter
         Camera gameplayCamera,
         RectTransform arrow,
         Canvas canvas,
-        IInGameLogger logger,
         Camera uiCamera = null)
     {
         _view = view;
@@ -83,20 +82,20 @@ public class ArrowUIFollowTrackerPresenter : IArrowUIFollowTrackerPresenter
     {
         _target = target;
         
-        _tickHandler.FrameUpdate -= OnUpdateFrame;
-        _tickHandler.FrameUpdate += OnUpdateFrame;
+        _tickHandler.FrameLateUpdate -= OnLateUpdateFrame;
+        _tickHandler.FrameLateUpdate += OnLateUpdateFrame;
     }
 
     public void StopTrack()
     {
-        _tickHandler.FrameUpdate -= OnUpdateFrame;
+        _tickHandler.FrameLateUpdate -= OnLateUpdateFrame;
 
         _arrow.rotation = _initialRotation;
     }
 
     //TODO: move logic in model
     //todo: refactor
-    private void OnUpdateFrame(float deltaTime)
+    private void OnLateUpdateFrame(float deltaTime)
     {
         if (_arrow == null)
         {

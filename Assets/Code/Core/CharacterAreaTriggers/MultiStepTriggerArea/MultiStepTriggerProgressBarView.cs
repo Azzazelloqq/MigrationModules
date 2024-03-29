@@ -1,19 +1,26 @@
 using System;
 using Code.Core.CharacterAreaTriggers.ProgressBar.BaseMVP;
 using DG.Tweening;
+using TMPro;
 using UnityEngine;
 
 public class MultiStepTriggerProgressBarView : ProgressBarViewBase
 {
     [SerializeField]
     private SpriteRenderer _progressFill;
+    [SerializeField]
+    private TMP_Text _progressText;
     
     private Tween _updateZoneTypeIconTween;
     private Tween _progressBarSizeTween;
     private Tweener _progressBarTweener;
+    private Tweener _progressBarTextTweener;
+
     private bool _isDestroyed;
     private float startWidth;
-    
+    private int _cachedCurrentValue;
+    private int _cachedMaxValue;
+
     public override void Initialize(float aValue)
     {
         stepFilledCallback = null;
@@ -28,6 +35,7 @@ public class MultiStepTriggerProgressBarView : ProgressBarViewBase
         stepFilledCallback = null;
         _updateZoneTypeIconTween?.Kill();
         _progressBarTweener?.Kill();
+        _progressBarTextTweener?.Kill();
         _progressBarSizeTween?.Kill();
     }
     
@@ -39,6 +47,12 @@ public class MultiStepTriggerProgressBarView : ProgressBarViewBase
     public override void UpdateBarValue(float endValue, float duration)
     {
         PlayProgressBarAnimation(_progressFill.size.x, endValue, duration);
+    }
+    public override void UpdateBarText(int currentValue, int maxValue)
+    {
+        _cachedMaxValue = maxValue;
+        
+        PlayProgressBarTextAnimation(_cachedCurrentValue, currentValue, 0.5f);
     }
 
     public override void OnFillComplete(Action callback)
@@ -61,6 +75,8 @@ public class MultiStepTriggerProgressBarView : ProgressBarViewBase
         });
     }
     
+    
+    
     private void UpdateProgressBarWidth(float width)
     {
         var sizeOffset = width - _progressFill.size.x;
@@ -72,5 +88,38 @@ public class MultiStepTriggerProgressBarView : ProgressBarViewBase
         var barSize = _progressFill.size;
         barSize = new Vector2(width, barSize.y);
         _progressFill.size = barSize;
+    }
+    
+    private void PlayProgressBarTextAnimation(int startValue, int endValue, float duration)
+    {
+        _progressBarTextTweener?.Kill();
+        _cachedCurrentValue = endValue;
+        _progressBarTextTweener = DOVirtual.Int(
+                startValue,endValue, duration, 
+                UpdateProgressBarText).SetEase(Ease.InCirc).
+            OnComplete(() =>
+            {
+               
+            });
+    }
+    private void UpdateProgressBarText(int currentValue)
+    {
+        var formattedCurrentValue = FormatValue(currentValue);
+        var formattedMaxValue = FormatValue(_cachedMaxValue);
+        
+        _progressText.text = $"{formattedCurrentValue}/{formattedMaxValue}";
+    }
+    
+    //TODO Move this to base progress bar
+    private string FormatValue(int value)
+    {
+        var formattedValue = value.ToString();
+        
+        if (value / 1000 >= 1 && value % 1000 == 0)
+        {
+            formattedValue = $"{value / 1000}K";
+        }
+
+        return formattedValue;
     }
 }

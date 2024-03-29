@@ -1,6 +1,4 @@
 ﻿using Code.Core.CameraControl.Provider;
-using Code.Core.CharacterAreaTriggers;
-using Code.Core.CharacterAreaTriggers.Base;
 using Code.Core.CharactersControlModules.CommonCharacterModules.CharacterHandModule.BaseMVP;
 using Code.Core.CharactersControlModules.Player.PlayerMovement.BaseMVP;
 using Code.Core.CharactersControlModules.Player.PlayerMovement.Config;
@@ -12,14 +10,16 @@ using Code.Core.LocalSaveSystem;
 using Code.Core.MVP;
 using Code.Core.MVP.Disposable;
 using Code.Core.TickHandler;
+using Code.Core.UpgradeHandler.Upgradable;
 using UnityEngine;
 
 namespace Code.Core.CharactersControlModules.Player.PlayerMovement
 {
-public class PlayerMovementPresenter : IPlayerMovementPresenter
+public class PlayerMovementPresenter : IPlayerMovementPresenter, IUpgradable
 {
     public bool IsStand => _model.AxisIsZero();
-
+    public string UpgradableId => _model.UpgradableId;
+    
     IModel IPresenter.Model => _model;
     IView IPresenter.View => _view;
 
@@ -67,6 +67,8 @@ public class PlayerMovementPresenter : IPlayerMovementPresenter
         #endif
 
         _view.Initialize(this);
+
+        _playerModulesProvider.RegisterUpgradable(this);
     }
 
     public void Dispose()
@@ -78,6 +80,8 @@ public class PlayerMovementPresenter : IPlayerMovementPresenter
         _tickHandler.PhysicUpdate -= OnPhysicUpdate;
 
         _compositeDisposable.Dispose();
+        
+        _playerModulesProvider.UnregisterUpgradable(this);
     }
 
     public Transform GetTransform()
@@ -95,7 +99,7 @@ public class PlayerMovementPresenter : IPlayerMovementPresenter
         _model.IncreaseLevel();
 
         var playerMovementSave = _saveSystem.Load<PlayerMovementSave>();
-        playerMovementSave.CurrenMoveSpeedLevel = _model.CurrentLevel;
+        playerMovementSave.CurrentMoveSpeedLevel = _model.CurrentLevel;
         _saveSystem.Save();
 
         if (TryGetMeshByLevel(_model.CurrentLevel, out var mesh))
@@ -149,13 +153,13 @@ public class PlayerMovementPresenter : IPlayerMovementPresenter
         var rotationSpeed = _model.RotationSpeed;
 
         joystickAxis = _model.CurrentAxis;
-        var cameraTransform = _cameraProvider.Camera.transform;
+        var cameraTransform = _cameraProvider.GetMainCamera().transform;
         var convertedAxis = AdjustJoystickAxisWithCameraRotation(joystickAxis, cameraTransform);
         var axisX = convertedAxis.AxisX;
         var axisY = convertedAxis.AxisY;
         var movement = new Vector3(axisX, 0, axisY);
-
-        rigidbody.MovePosition(rigidbody.position + movement * speed * deltaTime);
+        
+        rigidbody.velocity = movement * speed;
 
         var toRotation = Quaternion.LookRotation(movement, Vector3.up);
 
@@ -176,7 +180,7 @@ public class PlayerMovementPresenter : IPlayerMovementPresenter
     private void InitializeModel(PlayerConfigPage playerConfigPage)
     {
         var playerMovementSave = _saveSystem.Load<PlayerMovementSave>();
-        var currenMoveSpeedLevel = playerMovementSave.CurrenMoveSpeedLevel;
+        var currenMoveSpeedLevel = playerMovementSave.CurrentMoveSpeedLevel;
         _model.InitializeLevelInfo(playerConfigPage.PlayerMoveSpeedByLevel, currenMoveSpeedLevel);
         _model.UpdateRotationSpeed(playerConfigPage.RotateSpeed);
     }
@@ -187,6 +191,17 @@ public class PlayerMovementPresenter : IPlayerMovementPresenter
 
         _model.UpdateLevelInfo(playerConfig.PlayerMoveSpeedByLevel);
         _model.UpdateRotationSpeed(playerConfig.RotateSpeed);
+    }
+    
+    public void OnUpgraded()
+    {
+        _model.UpgradeMoveSpeed();
+        var playerMovementSave = _saveSystem.Load<PlayerMovementSave>();
+        var modelCurrentLevel = _model.CurrentLevel;
+        playerMovementSave.CurrentMoveSpeedLevel = modelCurrentLevel;
+
+        _playerModulesProvider.OnPlayerMovementUpgraded();
+        _saveSystem.Save();
     }
 }
 }

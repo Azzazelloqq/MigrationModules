@@ -58,6 +58,13 @@ public class MultiStepTriggerAreaView : MultiStepTriggerAreaViewBase
         progressBarView.UpdateBarValue(startValue, endValue, activityDuration);
     }
 
+    public override void UpdateTriggerProgressBar(float startValue, float endValue, int maxAmount, float activityDuration)
+    {
+        progressBarView.UpdateBarValue(startValue, endValue, activityDuration);
+        progressBarView.UpdateBarText(Mathf.RoundToInt(endValue* maxAmount), maxAmount);
+    }
+
+    
     public override void SetStepFilledCallback(Action callback)
     {
         progressBarView.OnFillComplete(callback);

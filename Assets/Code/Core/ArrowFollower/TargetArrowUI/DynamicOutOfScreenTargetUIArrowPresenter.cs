@@ -159,7 +159,7 @@ public class DynamicOutOfScreenTargetUIArrowPresenter : IDynamicOutOfScreenTarge
             paddingOffsetY,
             false);
         _tracker =
-            new ArrowUIFollowTrackerPresenter(view, model, _tickHandler, _gameplayCamera, _view.Arrow, _canvas, _logger,
+            new ArrowUIFollowTrackerPresenter(view, model, _tickHandler, _gameplayCamera, _view.Arrow, _canvas,
                 _uiCamera);
         _tracker.Initialize();
     }

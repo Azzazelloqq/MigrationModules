@@ -3,12 +3,13 @@ using System.Threading;
 using Code.Core.CharactersControlModules.BaseModule;
 using Code.Core.MVP;
 using Code.Core.PickableItems.PickableItem.BaseMVP;
+using Code.Core.UpgradeHandler.Upgradable;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace Code.Core.CharactersControlModules.CommonCharacterModules.CharacterHandModule.BaseMVP
 {
-public interface ICharacterHandPresenter : IPresenter, ICharacterModule
+public interface ICharacterHandPresenter : IPresenter, ICharacterModule, IUpgradable
 {
     public event Action<string> ItemAddedInHand;
     public event Action<IPickableItemPresenter> ItemRemovedFromHand;
@@ -25,7 +26,6 @@ public interface ICharacterHandPresenter : IPresenter, ICharacterModule
     public bool IsHaveSameItems();
     public string GetFirstItemId();
     public bool IsFull();
-    public void IncreaseHandLevel();
     public IPickableItemPresenter GetFirstItem();
     public string[] GetAllItemIds();
     public void ForceAddItems(string[] items);

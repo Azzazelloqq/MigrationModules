@@ -1,6 +1,7 @@
 ﻿using Code.Core.CharactersControlModules.CommonCharacterModules.CharacterHandModule.BaseMVP;
 using Code.Core.CharactersControlModules.Player.PlayerMovement.BaseMVP;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Code.Core.CharactersControlModules.Player.PlayerMovement
 {
@@ -15,8 +16,9 @@ public class PlayerMovementView : PlayerMovementViewBase
     [field: SerializeField]
     public override CharacterHandViewBase HandView { get; protected set; }
 
+
     [SerializeField]
-    private MeshFilter _movementMeshFilter;
+    private SkinnedMeshRenderer _movementMeshRenderer;
 
     public override Transform Transform => transform;
 
@@ -24,7 +26,7 @@ public class PlayerMovementView : PlayerMovementViewBase
 
     public override void UpdateMesh(Mesh mesh)
     {
-        _movementMeshFilter.mesh = mesh;
+        _movementMeshRenderer.sharedMesh = mesh;
     }
 }
 }

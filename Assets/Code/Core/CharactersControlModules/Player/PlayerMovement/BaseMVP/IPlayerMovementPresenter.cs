@@ -1,6 +1,4 @@
-﻿using Code.Core.CharacterAreaTriggers;
-using Code.Core.CharacterAreaTriggers.Base;
-using Code.Core.CharactersControlModules.BaseModule;
+﻿using Code.Core.CharactersControlModules.BaseModule;
 using Code.Core.CharactersControlModules.CommonCharacterModules.CharacterHandModule.BaseMVP;
 using Code.Core.MVP;
 using UnityEngine;

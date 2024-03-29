@@ -1,14 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using Code.Core.Logger;
 
 namespace Code.Core.CharactersControlModules.Player.PlayerCurrency
 {
 public class PlayerCurrencyModule : IPlayerCurrencyModule
 {
-    private readonly ICurrency[] _currencies;
     private readonly IInGameLogger _logger;
+    private IEnumerable<ICurrency> _currencies;
 
-    public PlayerCurrencyModule(ICurrency[] currencies, IInGameLogger logger)
+    public PlayerCurrencyModule(IEnumerable<ICurrency> currencies, IInGameLogger logger)
     {
         _currencies = currencies;
         _logger = logger;
@@ -16,10 +17,16 @@ public class PlayerCurrencyModule : IPlayerCurrencyModule
 
     public void Dispose()
     {
+        _currencies = Array.Empty<ICurrency>();
     }
 
     public void IncreaseCurrency<T>(int count) where T : ICurrency
     {
+        if (count <= 0)
+        {
+            return;
+        }
+        
         var currency = GetCurrency<T>();
         currency.Increase(count);
     }
@@ -27,10 +34,12 @@ public class PlayerCurrencyModule : IPlayerCurrencyModule
     public void DecreaseCurrency<T>(int count) where T : ICurrency
     {
         var currency = GetCurrency<T>();
-        if (currency.CurrencyCount >= count)
+        if (currency.CurrencyCount < count || count < 0)
         {
-            currency.Decrease(count);
+            return;
         }
+
+        currency.Decrease(count);
     }
 
     public void MakeCurrencyCountEmpty<T>() where T : ICurrency

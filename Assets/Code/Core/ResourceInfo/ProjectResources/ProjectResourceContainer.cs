@@ -10,6 +10,7 @@ public struct ProjectResourceContainer
     public readonly ObjectivesResources ObjectivesResources;
     public string CustomerView { get; }
     
+    
     public ProjectResourceContainer(string groupId)
     {
         GroupId = groupId;

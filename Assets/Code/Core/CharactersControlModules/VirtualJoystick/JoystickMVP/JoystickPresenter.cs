@@ -15,11 +15,11 @@ public class JoystickPresenter : IJoystickPresenter
     IModel IPresenter.Model => _model;
     IView IPresenter.View => _view;
 
-    private readonly Base.JoystickViewBase _view;
+    private readonly JoystickViewBase _view;
     private readonly IJoystickModel _model;
     private readonly ICompositeDisposable _compositeDisposable;
 
-    public JoystickPresenter(Base.JoystickViewBase joystickView, IJoystickModel joystickModel)
+    public JoystickPresenter(JoystickViewBase joystickView, IJoystickModel joystickModel)
     {
         _compositeDisposable = new CompositeDisposable();
         _view = joystickView;

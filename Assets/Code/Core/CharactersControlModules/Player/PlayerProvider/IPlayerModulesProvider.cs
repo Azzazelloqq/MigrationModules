@@ -4,6 +4,7 @@ using Code.Core.CharactersControlModules.CommonCharacterModules.CharacterHandMod
 using Code.Core.CharactersControlModules.Player.PlayerCurrency;
 using Code.Core.CharactersControlModules.VirtualJoystick.Images.Joystick;
 using Code.Core.PickableItems.PickableItem.BaseMVP;
+using Code.Core.UpgradeHandler.Upgradable;
 using Unity.Collections;
 using UnityEngine;
 
@@ -15,6 +16,10 @@ public interface IPlayerModulesProvider : IDisposable
     public event Action<int> PlayerRatingChanged; 
     public event Action<string> ItemAddedInHand;
     public event Action<IPickableItemPresenter> ItemRemovedFromHand;
+    public event Action PlayerMovementUpgraded;
+    public event Action PlayerHandUpgraded; 
+    public event Action MiniMapClosed; 
+    
     public string PlayerId { get; }
     public bool IsStand { get; }
 
@@ -37,16 +42,15 @@ public interface IPlayerModulesProvider : IDisposable
     public CharacterHandViewBase GetPlayerHandView();
     public bool IsHaveItemsInHand();
     public string GetPlayerTransferableId();
-    public void IncreaseHandLevel();
-    public bool PlayerHaveItem(string itemId);
-    public void AddItemInHand(string itemId, int price, Vector3 from);
-    public void AddItemInHand(string itemId, int price);
+    public bool PlayerHaveItem(string orderId);
+    public void AddItemInHand(string orderId, int price, Vector3 from);
+    public void AddItemInHand(string orderId, int price);
     public IPickableItemPresenter RemoveFirstItemFromHand();
-    public IPickableItemPresenter RemoveItemFromHand(string productId);
+    public IPickableItemPresenter RemoveItemFromHand(string orderId);
     public bool HandIsFull();
     public bool HandIsEmpty();
     public int GetHandCapacity();
-    public bool IsHaveItemInHand(string itemId);
+    public bool IsHaveItemInHand(string orderId);
 
     #endregion
 
@@ -90,7 +94,18 @@ public interface IPlayerModulesProvider : IDisposable
     public void CalculatePath(Vector3 startPoint, Vector3 endPoint, out NativeArray<Vector3> pathPoints);
     public Vector3 GetClosestNavigationPoint(Vector3 targetPoint);
     public int GetDirectDistance(Vector3 startPoint, Vector3 endPoint);
+    public void OnMinimapHidden();
     
+    #endregion
+
+    #region Upgrade
+
+    public void Upgrade(string upgradableId);
+    public void RegisterUpgradable(IUpgradable upgradable);
+    public void UnregisterUpgradable(IUpgradable upgradable);
+    public void OnPlayerMovementUpgraded();
+    public void OnPlayerHandUpgraded();
+
     #endregion
 }
 }

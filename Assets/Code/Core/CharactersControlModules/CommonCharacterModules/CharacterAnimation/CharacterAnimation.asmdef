@@ -1,0 +1,17 @@
+{
+    "name": "CharacterAnimation",
+    "rootNamespace": "",
+    "references": [
+        "GUID:165d35b2d715bca4ab5d063739358946",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

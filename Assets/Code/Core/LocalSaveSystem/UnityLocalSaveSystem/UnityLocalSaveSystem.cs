@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-using System.Threading.Tasks;
 using Code.Core.Logger;
 using Cysharp.Threading.Tasks;
 using Newtonsoft.Json;
@@ -41,11 +40,6 @@ public class UnityLocalSaveSystem : ILocalSaveSystem
         _filePath = Path.Combine(_storagePath, FileName);
         _autoSavePeriodPerSeconds = autoSavePeriodPerSeconds;
         SubscribeOnEvents();
-    }
-
-    public static UnityLocalSaveSystem CreateInstance(string storagePath, IInGameLogger logger, int autoSavePeriodPerSeconds = 3)
-    {
-        return new UnityLocalSaveSystem(storagePath, logger, autoSavePeriodPerSeconds);
     }
 
     public void InitializeSaves(ISavable[] savables)
@@ -329,7 +323,7 @@ public class UnityLocalSaveSystem : ILocalSaveSystem
 
     private void OnApplicationQuitting()
     {
-        CancelSave();
+        StopAutoSave();
         
         SaveAll();
 
@@ -375,7 +369,6 @@ public class UnityLocalSaveSystem : ILocalSaveSystem
     private void SaveAll()
     {
         CreateDirectoryIfNeed();
-
         var json = JsonConvert.SerializeObject(_savesCash);
         File.WriteAllText(_filePath, json);
     }

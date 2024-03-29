@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Code.Core.CameraControl.CameraMovement.Base;
 using Code.Core.CameraControl.CameraMovement.Config;
 using Code.Core.Config.MainLocalConfig;
@@ -20,7 +21,8 @@ public class CameraMovementPresenter : ICameraMovementPresenter
     IModel IPresenter.Model => _model;
     IView IPresenter.View => _view;
 
-    public Camera Camera => _view.GameplayCamera;
+    public Camera MainCamera => _view.GameplayCamera;
+    public Camera ActiveCamera => _view.ActiveCamera;
     public bool CinematicInProcess => _model.CinematicInProcess;
 
     private readonly CameraMovementViewBase _view;
@@ -29,9 +31,13 @@ public class CameraMovementPresenter : ICameraMovementPresenter
     private readonly ILocalConfig _config;
     private Action _onMoveCompleted;
     private Action _onDelayCompleted;
+    private Action _onZoomCompleted;
     private Action _onReturnCinematicCamera;
     private GameplayCameraConfigPage _cameraConfig;
 
+    
+    public List<Camera> _cameras = new List<Camera>();
+    
     public CameraMovementPresenter(
         CameraMovementViewBase view,
         ICameraMovementModel model,
@@ -48,6 +54,11 @@ public class CameraMovementPresenter : ICameraMovementPresenter
         InitializeView(tickHandler, logger);
         _compositeDisposable.AddDisposable(_view, _model);
         
+        _cameras.Add(_view.GameplayCamera);
+        _cameras.Add(_view.MiniMapCamera);
+
+        EnableCamera(MainCamera);
+        
         #if UNITY_EDITOR || DEVELOPMENT_BUILD
         _config.ConfigChanged += OnConfigChanged;
         #endif
@@ -58,8 +69,51 @@ public class CameraMovementPresenter : ICameraMovementPresenter
         #if UNITY_EDITOR || DEVELOPMENT_BUILD
         _config.ConfigChanged -= OnConfigChanged;
         #endif
-        
+    
+        _onZoomCompleted = null;
         _compositeDisposable.Dispose();
+    }
+
+    public void EnableCamera(Camera targetCamera)
+    {
+        for (var i = _cameras.Count-1; i >= 0; i--)
+        {
+            var camera = _cameras[i];
+
+            if (camera == targetCamera)
+            {
+                camera.gameObject.SetActive(true);
+                _view.ActiveCamera = camera;
+            }
+            else
+            {
+                camera.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    public void DisableCamera(Camera targetCamera)
+    {
+        var hasActiveCam = false;
+
+        for (var i = _cameras.Count - 1; i >= 0; i--)
+        {
+            var camera = _cameras[i];
+            if (camera == targetCamera)
+            {
+                camera.gameObject.SetActive(false);
+            }
+
+            if (camera.gameObject.activeSelf)
+            {
+                hasActiveCam = true;
+            }
+        }
+
+        if (!hasActiveCam)
+        {
+            EnableCamera(MainCamera);
+        }
     }
 
     public void FollowTarget(Transform target)
@@ -79,6 +133,18 @@ public class CameraMovementPresenter : ICameraMovementPresenter
         CinematicMoveToPositionProcess(endPosition, delayOnTarget, onMoveCompleted, onDelayCompleted);
     }
 
+    public void CinematicZoom(float zoomValue, Action onZoomCompleted = null)
+    {
+        if (ActiveCamera.orthographic)
+        {
+            CinematicZoomProcess(zoomValue, onZoomCompleted);
+        }
+        else
+        {
+            ActiveCamera.fieldOfView = zoomValue;
+        }    
+    }
+    
     public void ReturnCinematicCamera(Action onReturnCameraCompleted = null)
     {
         CinematicStarted?.Invoke();
@@ -86,6 +152,7 @@ public class CameraMovementPresenter : ICameraMovementPresenter
 
         _model.OnCinematicStepStarted();
         var delayOnTargetDuration = _cameraConfig.DelayOnTargetDuration;
+        
         _view.ReturnCinematicCamera(delayOnTargetDuration);
     }
 
@@ -109,6 +176,11 @@ public class CameraMovementPresenter : ICameraMovementPresenter
     public float GetCameraFieldOfView()
     {
         return _cameraConfig.CameraFieldOfView;
+    }
+
+    public float GetOrthographicCameraSize()
+    {
+        return _cameraConfig.OrthographicCameraSize;
     }
 
     public Vector3 GetCameraTargetOffset()
@@ -137,13 +209,18 @@ public class CameraMovementPresenter : ICameraMovementPresenter
         }
     }
 
+    public void OnCinematicZoomCameraCompleted()
+    {
+        _onZoomCompleted?.Invoke();
+    }
+    
     private void InitializeView(ITickHandler tickHandler, IInGameLogger logger)
     {
         _view.Initialize(this);
         _view.InitializeDependencies(tickHandler, logger);
     }
-    
-    public void CinematicMoveToPositionProcess(Vector3 endPosition, float delayOnTargetDuration, Action onMoveCompleted = null, Action onDelayCompleted = null)
+
+    private void CinematicMoveToPositionProcess(Vector3 endPosition, float delayOnTargetDuration, Action onMoveCompleted = null, Action onDelayCompleted = null)
     {
         _model.OnCinematicStepStarted();
         CinematicStarted?.Invoke();
@@ -157,10 +234,21 @@ public class CameraMovementPresenter : ICameraMovementPresenter
 
         _view.CinematicMoveToTarget(newPosition, moveToTargetDuration, delayOnTargetDuration);
     }
+
+    private void CinematicZoomProcess(float endZoom, Action onZoomCompleted = null)
+    {
+        CinematicStarted?.Invoke();
+        _onZoomCompleted = onZoomCompleted;
+        var zoomDuration = _cameraConfig.CinematicZoomDuration;
+        var delayOnTargetDuration = _cameraConfig.DelayOnTargetDuration;
+        _view.CinematicZoom(endZoom, zoomDuration, delayOnTargetDuration);
+    }
     
+    #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private void OnConfigChanged(ILocalConfig config)
     {
         _cameraConfig = config.GetConfigPage<GameplayCameraConfigPage>();
     }
+    #endif
 }
 }

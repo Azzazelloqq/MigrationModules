@@ -1,3 +1,24 @@
 {
-	"name": "TutorialSystem"
+    "name": "TutorialSystem",
+    "rootNamespace": "",
+    "references": [
+        "GUID:d2c2a46a0d90235499c918e745939b1c",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:59d2283191b76d34fa12ebc133f44674",
+        "GUID:28ce0990fb479214db3d8aec01d657f0",
+        "GUID:b4ff2dcd76f107c49a2de8be21346047",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:a649dfdd7ec849148a9a050cb8705d74",
+        "GUID:1f0d534ff9cfc764fa44091b7f57ddab",
+        "GUID:4d5db090d868d5e40acc9d57b5a46481"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

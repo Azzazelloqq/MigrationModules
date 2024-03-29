@@ -63,7 +63,7 @@ public class CompositeDisposable : ICompositeDisposable
         }
     }
 
-    public void AddDisposable(IDisposable[] disposables)
+    public void AddDisposable(IEnumerable<IDisposable> disposables)
     {
         foreach (var disposable in disposables)
         {
@@ -71,14 +71,6 @@ public class CompositeDisposable : ICompositeDisposable
             {
                 _disposables.Add(disposable);
             }
-        }
-    }
-
-    public void DisposeCollection(IReadOnlyCollection<IDisposable> disposables)
-    {
-        foreach (var disposable in _disposables)
-        {
-            disposable.Dispose();
         }
     }
 }

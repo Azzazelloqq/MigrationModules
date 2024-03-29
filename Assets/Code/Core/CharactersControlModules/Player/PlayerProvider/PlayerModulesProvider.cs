@@ -7,9 +7,12 @@ using Code.Core.CharactersControlModules.Player.PlayerCurrency;
 using Code.Core.CharactersControlModules.Player.PlayerMovement.BaseMVP;
 using Code.Core.CharactersControlModules.VirtualJoystick.Images.Joystick;
 using Code.Core.CharactersControlModules.VirtualJoystick.JoystickMVP.Base;
+using Code.Core.LocalSaveSystem;
 using Code.Core.Logger;
 using Code.Core.MVP.Disposable;
 using Code.Core.PickableItems.PickableItem.BaseMVP;
+using Code.Core.UpgradeHandler.Provider;
+using Code.Core.UpgradeHandler.Upgradable;
 using Unity.Collections;
 using UnityEngine;
 
@@ -21,12 +24,16 @@ public class PlayerModulesProvider : IPlayerModulesProvider
     public event Action<int> PlayerRatingChanged; 
     public event Action<string> ItemAddedInHand;
     public event Action<IPickableItemPresenter> ItemRemovedFromHand;
-
+    public event Action PlayerMovementUpgraded;
+    public event Action PlayerHandUpgraded; 
+    public event Action MiniMapClosed; 
+    
     public string PlayerId => _playerId;
     public bool IsStand => _playerMovement.IsStand;
 
     private readonly IInGameLogger _logger;
     private readonly string _playerId;
+    private readonly ILocalSaveSystem _localSaveSystem;
     private ICharacterHandPresenter _playerHand;
     private IPlayerMovementPresenter _playerMovement;
     private IPlayerCurrencyModule _playerCurrencyModule;
@@ -34,11 +41,13 @@ public class PlayerModulesProvider : IPlayerModulesProvider
     private ICharacterRatingModule _characterRatingModule;
     private ICharacterNavigationModule _characterNavigationModule;
     private readonly ICompositeDisposable _compositeDisposable = new CompositeDisposable();
+    private IUpgradeService _upgradeService;
 
-    public PlayerModulesProvider(IInGameLogger logger, string playerId)
+    public PlayerModulesProvider(IInGameLogger logger, string playerId, ILocalSaveSystem localSaveSystem)
     {
         _logger = logger;
         _playerId = playerId;
+        _localSaveSystem = localSaveSystem;
     }
 
     public void Dispose()
@@ -72,6 +81,9 @@ public class PlayerModulesProvider : IPlayerModulesProvider
                 break;
             case ICharacterNavigationModule characterNavigationModule:
                 AddPlayerNavigationModule(characterNavigationModule);
+                break;
+            case IUpgradeService upgradeProvider:
+                AddUpgradeProvider(upgradeProvider);
                 break;
         }
         
@@ -142,17 +154,10 @@ public class PlayerModulesProvider : IPlayerModulesProvider
         //return _playerMovement.TransferableId;
     }
 
-    public void IncreaseHandLevel()
+    public bool PlayerHaveItem(string orderId)
     {
-        _playerHand.IncreaseHandLevel();
+        return _playerHand.IsHaveItem(orderId);
     }
-
-    public bool PlayerHaveItem(string itemId)
-    {
-        return _playerHand.IsHaveItem(itemId);
-    }
-
-    
 
     public Transform GetPlayerTransform()
     {
@@ -243,6 +248,11 @@ public class PlayerModulesProvider : IPlayerModulesProvider
         return _characterNavigationModule.GetDirectDistance(startPoint, endPoint);
     }
 
+    public void OnMinimapHidden()
+    {
+        MiniMapClosed?.Invoke();
+    }
+
     public bool HandIsFull()
     {
         return _playerHand.IsFull();
@@ -258,9 +268,9 @@ public class PlayerModulesProvider : IPlayerModulesProvider
         return _playerHand.GetHandCapacity();
     }
 
-    public bool IsHaveItemInHand(string itemId)
+    public bool IsHaveItemInHand(string orderId)
     {
-        return _playerHand.IsHaveItem(itemId);
+        return _playerHand.IsHaveItem(orderId);
     }
 
     public void ShowJoystick()
@@ -288,9 +298,9 @@ public class PlayerModulesProvider : IPlayerModulesProvider
         return _joystickPresenter.GetAxis();
     }
 
-    public void AddItemInHand(string itemId, int price)
+    public void AddItemInHand(string orderId, int price)
     {
-        var isSuccess = _playerHand.TryAddItemInHand(itemId, price);
+        var isSuccess = _playerHand.TryAddItemInHand(orderId, price);
 
         if (isSuccess)
         {
@@ -302,9 +312,9 @@ public class PlayerModulesProvider : IPlayerModulesProvider
             : "Can't add item in player hand");
     }
     
-    public void AddItemInHand(string itemId, int price, Vector3 from)
+    public void AddItemInHand(string orderId, int price, Vector3 from)
     {
-        var isSuccess = _playerHand.TryAddItemInHand(itemId, price, from);
+        var isSuccess = _playerHand.TryAddItemInHand(orderId, price, from);
 
         if (isSuccess)
         {
@@ -333,14 +343,14 @@ public class PlayerModulesProvider : IPlayerModulesProvider
         return removedItem;
     }
     
-    public IPickableItemPresenter RemoveItemFromHand(string productId)
+    public IPickableItemPresenter RemoveItemFromHand(string orderId)
     {
         if (!_playerHand.IsHaveItems())
         {
             _logger.LogError("Player hand is empty, can't take item");
         }
 
-        var isSuccess = _playerHand.TryRemoveItemFromHand(productId, out var removedItem);
+        var isSuccess = _playerHand.TryRemoveItemFromHand(orderId, out var removedItem);
 
         if (!isSuccess)
         {
@@ -350,15 +360,34 @@ public class PlayerModulesProvider : IPlayerModulesProvider
         return removedItem;
     }
 
-    public void RemoveAllItemsFromHand(out IPickableItemPresenter[] removedItems)
-    {
-        _playerHand.RemoveAllItemsFromHand(out removedItems);
+    #region Upgrade
 
-        foreach (var item in removedItems)
-        {
-            ItemRemovedFromHand?.Invoke(item);
-        }
+    public void Upgrade(string upgradableId)
+    {
+        _upgradeService.Upgrade(upgradableId);
     }
+
+    public void RegisterUpgradable(IUpgradable upgradable)
+    {
+        _upgradeService.Register(upgradable);
+    }
+
+    public void UnregisterUpgradable(IUpgradable upgradable)
+    {
+        _upgradeService.Unregister(upgradable);
+    }
+    
+    public void OnPlayerMovementUpgraded()
+    {
+        PlayerMovementUpgraded?.Invoke();
+    }
+
+    public void OnPlayerHandUpgraded()
+    {
+        PlayerHandUpgraded?.Invoke();
+    }
+
+    #endregion
 
     #region ModuleSetters
 
@@ -395,9 +424,9 @@ public class PlayerModulesProvider : IPlayerModulesProvider
         _playerHand.ItemRemovedFromHand -= OnItemRemovedFromHand;
     }
 
-    private void OnItemAddedInHand(string itemId)
+    private void OnItemAddedInHand(string orderId)
     {
-        ItemAddedInHand?.Invoke(itemId);
+        ItemAddedInHand?.Invoke(orderId);
     }
 
     private void OnItemRemovedFromHand(IPickableItemPresenter item)
@@ -477,7 +506,11 @@ public class PlayerModulesProvider : IPlayerModulesProvider
         _characterNavigationModule = characterNavigationModule;
     }
     
-    #endregion
+    private void AddUpgradeProvider(IUpgradeService upgradeService)
+    {
+        _upgradeService = upgradeService;
+    }
 
+    #endregion
 }
 }

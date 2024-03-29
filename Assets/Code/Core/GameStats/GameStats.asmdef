@@ -1,0 +1,19 @@
+{
+    "name": "GameStats",
+    "rootNamespace": "",
+    "references": [
+        "GUID:d2c2a46a0d90235499c918e745939b1c",
+        "GUID:75926e9ab93cd484cb5f10dc6d6881f3",
+        "GUID:e6bdd281d507e6c408379bbd4ca37183",
+        "GUID:4d5db090d868d5e40acc9d57b5a46481"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

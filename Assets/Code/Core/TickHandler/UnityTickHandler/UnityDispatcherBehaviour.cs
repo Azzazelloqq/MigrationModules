@@ -8,6 +8,7 @@ public class UnityDispatcherBehaviour : MonoBehaviour, IDispatcher
     public event Action<float> OnUpdate;
     public event Action<float> OnLateUpdate;
     public event Action<float> OnFixedUpdate;
+    public event Action<float> OnEndFrameUpdate;
 
     private void Update()
     {
@@ -17,6 +18,7 @@ public class UnityDispatcherBehaviour : MonoBehaviour, IDispatcher
     private void LateUpdate()
     {
         OnLateUpdate?.Invoke(Time.deltaTime);
+        OnEndFrameUpdate?.Invoke(Time.deltaTime);
     }
 
     private void FixedUpdate()

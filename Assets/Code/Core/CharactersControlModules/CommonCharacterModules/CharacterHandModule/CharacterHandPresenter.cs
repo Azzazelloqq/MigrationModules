@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Threading;
 using Code.Core.CharactersControlModules.CommonCharacterModules.CharacterHandModule.BaseMVP;
 using Code.Core.CharactersControlModules.CommonCharacterModules.CharacterHandModule.Config;
+using Code.Core.CharactersControlModules.CommonCharacterModules.CharacterHandModule.Save;
 using Code.Core.Config.MainLocalConfig;
 using Code.Core.GameplayMessages;
 using Code.Core.GameplayMessages.BaseMVP;
+using Code.Core.LocalSaveSystem;
 using Code.Core.Logger;
 using Code.Core.MVP;
 using Code.Core.MVP.Disposable;
@@ -15,6 +17,7 @@ using Code.Core.PickableItems.PickableItem.FlexibleTownPickableItem.ItemBehaviou
 using Code.Core.PickableItems.PickableItem.GenericPickableItem;
 using Code.Core.ResourceLoader;
 using Code.Core.TickHandler;
+using Code.Core.UpgradeHandler.Upgradable;
 using Cysharp.Threading.Tasks;
 using ResourceInfo.Code.Core.ResourceInfo;
 using UnityEngine;
@@ -31,7 +34,8 @@ public class CharacterHandPresenter : ICharacterHandPresenter
     public event Action<IPickableItemPresenter> ItemRemovedFromHand;
 
     public int CurrentHandLevel => _model.CurrentLevel;
-    
+    public string UpgradableId => _model.UpgradableId;
+
     IModel IPresenter.Model => _model;
     IView IPresenter.View => _view;
 
@@ -49,11 +53,13 @@ public class CharacterHandPresenter : ICharacterHandPresenter
     private readonly IItemIdConverter _itemIdConverter;
     private readonly CancellationTokenSource _disposeEaterTokenSource = new();
     private readonly IInGameLogger _logger;
+    private readonly ILocalSaveSystem _saveSystem;
+    private readonly Action<IUpgradable> _registerUpgrade;
+    private readonly Action<IUpgradable> _unregisterUpgrade;
     private PickableItemAnimationPage _pickableItemAnimationPage;
 
 
-    public CharacterHandPresenter(
-        CharacterHandViewBase view,
+    public CharacterHandPresenter(CharacterHandViewBase view,
         ICharacterHandModel model,
         Camera movementCamera,
         IResourceLoader resourceLoader,
@@ -61,8 +67,11 @@ public class CharacterHandPresenter : ICharacterHandPresenter
         ILocalConfig config,
         IItemIdConverter itemIdConverter,
         IInGameLogger logger,
+        ILocalSaveSystem saveSystem,
         Dictionary<int, int> handCapacityByLevel,
         int currentLevel,
+        Action<IUpgradable> registerUpgrade = null,
+        Action<IUpgradable> unregisterUpgrade = null,
         bool showFullMessage = true)
     {
         _view = view;
@@ -79,6 +88,9 @@ public class CharacterHandPresenter : ICharacterHandPresenter
         _config = config;
         _itemIdConverter = itemIdConverter;
         _logger = logger;
+        _saveSystem = saveSystem;
+        _registerUpgrade = registerUpgrade;
+        _unregisterUpgrade = unregisterUpgrade;
         _pickableItemAnimationPage = _config.GetConfigPage<PickableItemAnimationPage>();
         
         #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -97,6 +109,8 @@ public class CharacterHandPresenter : ICharacterHandPresenter
             _gameplayMessagePresenter.SetMessage(HandIsFullMessage);
             _gameplayMessagePresenter.Hide(true);
         }
+        
+        _registerUpgrade?.Invoke(this);
     }
 
     public void Dispose()
@@ -106,6 +120,8 @@ public class CharacterHandPresenter : ICharacterHandPresenter
         
         _compositeDisposable.Dispose();
         UnsubscribeOnModelEvents();
+        
+        _unregisterUpgrade?.Invoke(this);
     }
     
     public bool TryAddItemInHand(string itemId, int price)
@@ -206,11 +222,6 @@ public class CharacterHandPresenter : ICharacterHandPresenter
     public string GetFirstItemId()
     {
         return _model.GetFirstItemId();
-    }
-
-    public void IncreaseHandLevel()
-    {
-        _model.IncreaseHandLevel();
     }
 
     public IPickableItemPresenter GetFirstItem()
@@ -455,5 +466,15 @@ public class CharacterHandPresenter : ICharacterHandPresenter
         _pickableItemAnimationPage = config.GetConfigPage<PickableItemAnimationPage>();
     }
     #endif
+    public void OnUpgraded()
+    {
+        _model.UpgradeLevel();
+        
+        var currentLevel = _model.CurrentLevel;
+        
+        var handSave = _saveSystem.Load<CharacterHandSave>();
+        handSave.CurrentHandLevel = currentLevel;
+        _saveSystem.Save();
+    }
 }
 }

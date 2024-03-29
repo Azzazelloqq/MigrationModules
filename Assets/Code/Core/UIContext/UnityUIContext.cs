@@ -35,6 +35,12 @@ public class UnityUIContext : MonoBehaviour, IUIContext
     [field: SerializeField]
     public RectTransform MiniMapParent { get; private set; }
 
+    [field: SerializeField]
+    public RectTransform TutorialsParent { get; private set; }
+    
+    [field: SerializeField]
+    public RectTransform LoadingScreen { get; private set;  }
+
     private bool _isDestroyed;
 
     public void Dispose()

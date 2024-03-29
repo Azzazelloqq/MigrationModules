@@ -11,7 +11,7 @@ public struct ArrowFollower
     {
         GroupId = groupId;
         DynamicOutOfScreenTargetUIArrowView = "DynamicOutOfScreenTargetUIArrowView";
-        TargetWorldArrowView = "TargetWorldArrowView";
+        TargetWorldArrowView = "TargetArrowWorldView";
         ArrowUIFollowTrackerView = "ArrowUIFollowTrackerView";
     }
 }

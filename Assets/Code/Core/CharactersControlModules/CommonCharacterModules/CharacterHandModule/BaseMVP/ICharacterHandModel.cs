@@ -13,6 +13,7 @@ public interface ICharacterHandModel : IModel
     
     public int ItemsInHandCount { get; }
     public int CurrentLevel { get; }
+    public string UpgradableId { get; }
 
     public void UpdateHandCapacityByLevel(Dictionary<int, int> handCapacityByLevel);
     public void UpdateCurrentLevel(int currentLevel);
@@ -30,9 +31,9 @@ public interface ICharacterHandModel : IModel
     public void ForceAddItems(string[] items);
     public void RemoveAllItems(out IPickableItemPresenter[] removedItems);
     public int GetItemsInHandCount();
-    public void IncreaseHandLevel();
     public bool IsHaveItem(string itemId);
     public int GetHandCapacity();
     public void AddItemPresenter(IPickableItemPresenter presenter);
+    public void UpgradeLevel();
 }
 }

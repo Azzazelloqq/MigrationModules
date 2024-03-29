@@ -1,0 +1,17 @@
+{
+    "name": "AdsService",
+    "rootNamespace": "",
+    "references": [
+        "GUID:4d5db090d868d5e40acc9d57b5a46481",
+        "GUID:cc8c565cf4c14324d80fcc72a4369851"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

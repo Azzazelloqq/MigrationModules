@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Code.Core.ArrowFollower.TargetArrowUI;
-using Code.Core.ArrowFollower.TargetArrowUI.BaseMVP;
+using Code.Core.ArrowFollower.TargetArrowWorld;
+using Code.Core.ArrowFollower.TargetArrowWorld.BaseMVP;
 using Code.Core.CharactersControlModules.CommonCharacterModules.CharacterNavigation;
 using Code.Core.CharactersControlModules.Player.PlayerProvider;
 using Code.Core.Config.MainLocalConfig;
@@ -22,21 +22,23 @@ namespace Code.Core.CharactersControlModules.Player.PlayerNavigation
 {
 public class PlayerNavigationModule : ICharacterNavigationModule
 {
-    private const float TimeBetweenCalculateDistance = 0.1f;
+    private const float TimeBetweenCalculateDistance = 0.25f;
     private const int MaxFollowersCount = 2;
     private const float MaxClosestDistance = 100;
+    private const float DisableArrowDistance = 5f;
 
     private readonly IResourceLoader _resourceLoader;
     private readonly IUIContext _uiContext;
-    private readonly string _arrowFollowerUIViewResourceId;
-    private readonly string _trackerViewResourceId;
+    private readonly string _arrowWorldViewResourceId;
     private readonly ICompositeDisposable _compositeDisposable = new CompositeDisposable();
     private readonly ITickHandler _tickHandler;
     private readonly Transform _player;
+    private readonly Transform _playerFollowerContainer;
     private readonly ILocalConfig _config;
     private readonly Camera _gameplayCamera;
     private readonly IPlayerModulesProvider _playerModulesProvider;
-    private readonly List<IDynamicOutOfScreenTargetUIArrowPresenter> _arrowFollowers = new(MaxFollowersCount);
+    private readonly List<ITargetArrowWorldPresenter> _arrows = new(MaxFollowersCount);
+    private List<ITargetArrowWorldPresenter> _activeArrows = new List<ITargetArrowWorldPresenter>();
     private readonly NavMeshPath _pathCash;
     private readonly IInGameLogger _logger;
     private readonly int _navMeshLayer;
@@ -49,6 +51,7 @@ public class PlayerNavigationModule : ICharacterNavigationModule
         IUIContext uiContext,
         ITickHandler tickHandler,
         Transform player,
+        Transform playerFollowerContainer,
         ILocalConfig config,
         Camera gameplayCamera,
         IInGameLogger logger,
@@ -59,6 +62,7 @@ public class PlayerNavigationModule : ICharacterNavigationModule
         _uiContext = uiContext;
         _tickHandler = tickHandler;
         _player = player;
+        _playerFollowerContainer = playerFollowerContainer;
         _config = config;
         _gameplayCamera = gameplayCamera;
         _logger = logger;
@@ -69,18 +73,16 @@ public class PlayerNavigationModule : ICharacterNavigationModule
         #if UNITY_EDITOR || DEVELOPMENT_BUILD
         _config.ConfigChanged += OnConfigChanged;
         #endif
-        _arrowFollowerUIViewResourceId = ResourceIdContainer.ModulesResourceContainer.ArrowFollower
-            .DynamicOutOfScreenTargetUIArrowView;
-        _trackerViewResourceId = ResourceIdContainer.ModulesResourceContainer.ArrowFollower.ArrowUIFollowTrackerView;
+        _arrowWorldViewResourceId = ResourceIdContainer.ModulesResourceContainer.ArrowFollower.TargetWorldArrowView;
     }
 
     public async UniTask InitializeAsync(CancellationToken token)
     {
         for (var i = 0; i < MaxFollowersCount; i++)
         {
-            var presenter = await InitializeUIArrowFollowerAsync(token);
+            var presenter = await InitializeArrowWorldFollowerAsync(token);
             presenter.Hide(true);
-            _arrowFollowers.Add(presenter);
+            _arrows.Add(presenter);
         }
 
         _tickHandler.FrameUpdate += CalculateDistance;
@@ -88,78 +90,95 @@ public class PlayerNavigationModule : ICharacterNavigationModule
 
     public void Dispose()
     {
-        _arrowFollowers.Clear();
-
+        _arrows.Clear();
+        _activeArrows.Clear();
+        
         _compositeDisposable.Dispose();
         _tickHandler.FrameUpdate -= CalculateDistance;
     }
 
     public void ShowWorldNavigation(Transform target, string targetId)
     {
-        var follower = GetFollower(targetId);
-        follower.StartFollow(target, targetId);
+        var arrow = GetArrow(targetId);
+        arrow.StartFollow(target, targetId);
+        arrow.Show();
     }
 
     public void ShowWorldNavigation(Transform target, string targetId, Color followerColor)
     {
-        var follower = GetFollower(targetId);
-        follower.StartFollow(target, targetId);
-        follower.UpdateFollowerIconColor(followerColor);
+        var arrow = GetArrow(targetId);
+        arrow.StartFollow(target, targetId);
+        arrow.Show();
+        arrow.UpdateFollowerIconColor(followerColor);
     }
 
-    private IDynamicOutOfScreenTargetUIArrowPresenter GetFollower(string targetId)
+    public void HideWorldNavigation(string targetId)
     {
-        if (TryGetFollowerByTargetId(targetId, out var follower))
+        if (!TryGetFollowerByTargetId(targetId, out var arrow))
         {
-            return follower;
+            _logger.LogError("Cant hide follower by target id " + targetId);
         }
 
-        var freeFollower = GetFreeFollower();
+        if (arrow == null)
+        {
+            return;
+        }
+            
+        arrow.StopFollow();
+        arrow.Hide();
+        
+        var arrowIndex = _activeArrows.IndexOf(arrow);
+        _activeArrows.RemoveAt(arrowIndex);
+    }
+    
+    private ITargetArrowWorldPresenter GetArrow(string targetId)
+    {
+        if (TryGetFollowerByTargetId(targetId, out var targetArrow))
+        {
+            return targetArrow;
+        }
 
-        return freeFollower;
+        var freeArrow = GetFreeFollower();
+
+        if (!_activeArrows.Contains(freeArrow))
+        {
+            _activeArrows.Add(freeArrow);
+        }
+        
+        return freeArrow;
     }
 
-    private IDynamicOutOfScreenTargetUIArrowPresenter GetFreeFollower()
+    private ITargetArrowWorldPresenter GetFreeFollower()
     {
-        foreach (var follower in _arrowFollowers)
+        foreach (var arrow in _arrows)
         {
-            if (follower.IsFollowing)
+            if (arrow.IsShown)
             {
                 continue;
             }
 
-            return follower;
+            return arrow;
         }
 
         _logger.LogError("Can't get free follower");
         return null;
     }
 
-    private bool TryGetFollowerByTargetId(string targetId, out IDynamicOutOfScreenTargetUIArrowPresenter presenter)
+    private bool TryGetFollowerByTargetId(string targetId, out ITargetArrowWorldPresenter presenter)
     {
-        foreach (var follower in _arrowFollowers)
+        foreach (var arrow in _arrows)
         {
-            if (follower.TargetId != targetId)
+            if (arrow.TargetId != targetId)
             {
                 continue;
             }
 
-            presenter = follower;
+            presenter = arrow;
             return true;
         }
 
         presenter = null;
         return false;
-    }
-
-    public void HideWorldNavigation(string targetId)
-    {
-        if (!TryGetFollowerByTargetId(targetId, out var follower))
-        {
-            _logger.LogError("Cant hide follower by target id " + targetId);
-        }
-
-        follower.StopFollow();
     }
 
     public int CalculateDistance(Vector3 startPoint, Vector3 endPoint)
@@ -240,32 +259,20 @@ public class PlayerNavigationModule : ICharacterNavigationModule
         _logger.LogError($"Can't find closest navigation point on nav mesh by position {targetPoint}");
         return Vector3.zero;
     }
-
-    //todo: inject this from constructor
-    private async Task<DynamicOutOfScreenTargetUIArrowPresenter> InitializeUIArrowFollowerAsync(CancellationToken token)
+    
+    private async Task<ITargetArrowWorldPresenter> InitializeArrowWorldFollowerAsync(CancellationToken token)
     {
-        var arrowFollowerViewPrefab =
-            await _resourceLoader.LoadResourceAsync<GameObject>(_arrowFollowerUIViewResourceId, token);
-        var view = Object.Instantiate(arrowFollowerViewPrefab, _uiContext.GameplayUIElements)
-            .GetComponent<DynamicOutOfScreenTargetUIArrowViewBase>();
+        var arrowViewPrefab =
+            await _resourceLoader.LoadResourceAsync<GameObject>(_arrowWorldViewResourceId, token);
+        var view = Object.Instantiate(arrowViewPrefab, _playerFollowerContainer)
+        .GetComponent<TargetArrowWorldViewBase>();
 
-        IDynamicOutOfScreenTargetUIArrowModel model = new DynamicOutOfScreenTargetUIArrowModel();
-        var canvasRectTransform = _uiContext.CanvasRectTransform;
-        var canvas = _uiContext.Canvas;
-        var presenter = new DynamicOutOfScreenTargetUIArrowPresenter(
-            view,
-            model,
-            _resourceLoader,
-            _tickHandler,
-            canvasRectTransform,
-            canvas,
-            _logger,
-            _gameplayCamera,
-            _trackerViewResourceId);
-
-        await presenter.InitializeAsync(token);
+        var model = new TargetArrowWorldModel();
+        var presenter = new TargetArrowWorldPresenter(model, view, _tickHandler);
+       
+        presenter.Initialize();
         _compositeDisposable.AddDisposable(presenter);
-
+        
         return presenter;
     }
 
@@ -276,20 +283,58 @@ public class PlayerNavigationModule : ICharacterNavigationModule
         {
             return;
         }
-        
-        foreach (var follower in _arrowFollowers)
+
+        for (var i = _activeArrows.Count-1; i >=0; i--)
         {
-            if (follower.IsHidden)
+            var arrow = _activeArrows[i];
+            
+            if (!arrow.HasTarget)
             {
                 continue;
             }
-
-            var targetId = follower.TargetPosition;
-            var viewDistance = GetDirectDistanceBetweenPlayerAndTarget(targetId);
-            follower.UpdateDistanceInfo(viewDistance.ToString());
-
+            
+            var targetPosition = arrow.TargetPosition;
+            var viewDistance = GetDirectDistanceBetweenPlayerAndTarget(targetPosition);
+            
+            if (arrow.IsShown && viewDistance <= DisableArrowDistance)
+            {
+                arrow.Hide();
+            }
+            else if(!arrow.IsShown && viewDistance > DisableArrowDistance)
+            {
+                arrow.Show();
+            }
+            else
+            {
+                arrow.UpdateDistanceInfo(viewDistance.ToString());
+            }
+            
             _timeBetweenCalculateDistancePass = 0f;
         }
+
+        //Sort by distance
+        for (var i = 0; i < _activeArrows.Count - 1; i++)
+        {
+            for (var j = 0; j < _activeArrows.Count - i - 1; j++)
+            {
+                var arrow = _activeArrows[j];
+                var nextArrow = _activeArrows[j + 1];
+                var currentDistance = GetDirectDistanceBetweenPlayerAndTarget(arrow.TargetPosition);
+                var nextDistance = GetDirectDistanceBetweenPlayerAndTarget(nextArrow.TargetPosition);
+                
+                if (currentDistance < nextDistance)
+                {
+                    (_activeArrows[j], _activeArrows[j + 1]) = (_activeArrows[j + 1], _activeArrows[j]);
+                }
+            }
+        }
+
+        for (var i = 0; i < _activeArrows.Count; i++)
+        {
+            var activeArrow = _activeArrows[i];
+            activeArrow.UpdateLayerOffset(i);
+        }
+      
     }
 
     private int GetDirectDistanceBetweenPlayerAndTarget(Vector3 targetPosition)

@@ -8,18 +8,20 @@ namespace Code.Core.CharactersControlModules.Player.PlayerMovement
 {
 public class PlayerMovementModel : IPlayerMovementModel
 {
-    private readonly IInGameLogger _logger;
     public float MoveSpeed { get; private set; }
     public JoystickAxis CurrentAxis { get; private set; }
     public float RotationSpeed { get; private set; }
     public int CurrentLevel { get; private set; }
     public string PlayerId { get; }
+    public string UpgradableId { get; }
 
+    private readonly IInGameLogger _logger;
     private Dictionary<int,float> _moveSpeedByLevel;
 
-    public PlayerMovementModel(string playerId, IInGameLogger logger)
+    public PlayerMovementModel(string playerId, string upgradableId, IInGameLogger logger)
     {
         _logger = logger;
+        UpgradableId = upgradableId;
         PlayerId = playerId;
     }
     
@@ -80,6 +82,21 @@ public class PlayerMovementModel : IPlayerMovementModel
         var axisIsZero = axisXIsZero && axisYIsZero;
         
         return axisIsZero;
+    }
+
+    public void UpgradeMoveSpeed()
+    {
+        var nextLevel = CurrentLevel + 1;
+        if (!_moveSpeedByLevel.TryGetValue(nextLevel, out var newMoveSpeed))
+        {
+            _logger.LogError($"Upgrade move speed doesn't contains level: {nextLevel}");
+            return;
+        }
+        
+        CurrentLevel++;
+        MoveSpeed = newMoveSpeed;
+        
+        _logger.Log("[Upgrade player] move speed upgraded");
     }
 }
 }

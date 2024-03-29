@@ -9,6 +9,7 @@ public abstract class MultiStepTriggerAreaViewBase : ViewMonoBehaviour<IMultiSte
 {
     public abstract void InitializeProgressBar(float progressBarValue=0f);
     public abstract void UpdateTriggerProgressBar(float startValue, float endValue, float activityDuration);
+    public abstract void UpdateTriggerProgressBar(float startValue, float endValue, int maxAmount, float activityDuration);
     public abstract void UpdateMultiStepTriggerCompletedState(bool isCompleted);
     public abstract void SetStepFilledCallback(Action callback);
     public abstract void OnStepProcessCompleted();

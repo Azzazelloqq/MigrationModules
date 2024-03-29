@@ -15,5 +15,7 @@ public interface IUIContext : IDisposable
     public RectTransform DevParent { get; }
     public RectTransform MainHud { get; }
     public RectTransform MiniMapParent { get; }
+    public RectTransform TutorialsParent { get; }
+    public RectTransform LoadingScreen { get; }
 }
 }

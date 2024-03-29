@@ -14,16 +14,18 @@ public class CharacterHandModel : ICharacterHandModel
     public event Action<IPickableItemPresenter> ItemRemovedFormHand;
     public int ItemsInHandCount { get; private set; }
     public int CurrentLevel { get; private set; }
-    
+    public string UpgradableId { get; }
+
     //todo: use only string id
     private readonly List<IPickableItemPresenter> _itemsInHand;
     private readonly IInGameLogger _logger;
     private int _handCapacity;
     private Dictionary<int,int> _handCapacityByLevel;
 
-    public CharacterHandModel(IInGameLogger logger)
+    public CharacterHandModel(string upgradableId, IInGameLogger logger)
     {
         _logger = logger;
+        UpgradableId = upgradableId;
         _itemsInHand = new List<IPickableItemPresenter>(HandDefaultCapacity);
     }
 
@@ -112,20 +114,6 @@ public class CharacterHandModel : ICharacterHandModel
         return _itemsInHand.Count;
     }
 
-    public void IncreaseHandLevel()
-    {
-        if (_handCapacityByLevel.ContainsKey(CurrentLevel + 1))
-        {
-            CurrentLevel++;
-        }
-        else
-        {
-            _logger.LogError($"Hand capacity info don't contain info about {CurrentLevel + 1}");
-        }
-        
-        _handCapacity = _handCapacityByLevel[CurrentLevel];
-    }
-
     public bool IsHaveItem(string itemId)
     {
         foreach (var pickableItemPresenter in _itemsInHand)
@@ -152,6 +140,20 @@ public class CharacterHandModel : ICharacterHandModel
     public void AddItemPresenter(IPickableItemPresenter presenter)
     {
         _itemsInHand.Add(presenter);
+    }
+
+    public void UpgradeLevel()
+    {
+        var newLevel = CurrentLevel + 1;
+        if (!_handCapacityByLevel.TryGetValue(newLevel, out var newCapacity))
+        {
+            _logger.Log($"Can't upgrade hand to level {newLevel}. Maybe need add level in config");
+            return;
+        }
+
+        CurrentLevel = newLevel;
+        
+        _handCapacity = newCapacity;
     }
 
     public bool TryAddItemInHand(string itemId)

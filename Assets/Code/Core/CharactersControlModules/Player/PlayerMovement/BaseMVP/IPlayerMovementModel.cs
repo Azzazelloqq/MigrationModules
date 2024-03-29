@@ -11,6 +11,7 @@ public interface IPlayerMovementModel : IModel
     public float RotationSpeed { get; }
     public int CurrentLevel { get; }
     public string PlayerId { get; }
+    public string UpgradableId { get; }
 
     public void UpdateRotationSpeed(float rotationSpeed);
     public void InitializeLevelInfo(Dictionary<int, float> moveSpeedByLevel, int currentLevel);
@@ -18,5 +19,6 @@ public interface IPlayerMovementModel : IModel
     public void IncreaseLevel();
     public void UpdateAxis(JoystickAxis axis);
     public bool AxisIsZero();
+    public void UpgradeMoveSpeed();
 }
 }
